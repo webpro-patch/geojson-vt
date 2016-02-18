@@ -8,7 +8,10 @@ var convert = require('./convert'), // GeoJSON conversion and preprocessing
 
 
 function geojsonvt(data, options) {
-    return new GeoJSONVT(data, options);
+  if (typeof data === 'string' || data instanceof String) {
+    data = JSON.parse(data);
+  }
+  return new GeoJSONVT(data, options);
 }
 
 function GeoJSONVT(data, options) {
@@ -110,7 +113,10 @@ GeoJSONVT.prototype.splitTile = function (features, z, x, y, cz, cx, cy) {
         }
 
         // if we slice further down, no need to keep source geometry
-        tile.source = null;
+        /*Work Around for missing Tiles
+        Tiles don't appear to be consistently saved for some reason, may have to drill down a couple times
+        so we can't remove source
+        tile.source = null;*/
 
         if (debug > 1) console.time('clipping');
 
@@ -170,7 +176,7 @@ GeoJSONVT.prototype.getTile = function (z, x, y) {
     if (debug > 1) console.log('found parent tile z%d-%d-%d', z0, x0, y0);
 
     // if we found a parent tile containing the original geometry, we can drill down from it
-    if (parent.source) {
+    if (parent && parent.source) {
         if (isClippedSquare(parent.features, options.extent, options.buffer)) return transformTile(parent, extent);
 
         if (debug > 1) console.time('drilling down');
@@ -211,9 +217,15 @@ function transformTile(tile, extent) {
 }
 
 function transformPoint(p, extent, z2, tx, ty) {
-    var x = Math.round(extent * (p[0] * z2 - tx)),
-        y = Math.round(extent * (p[1] * z2 - ty));
-    return [x, y];
+  var lon = p[0],
+    lat = p[1];
+  lon = (lon - 0.5) * 360;
+
+  lat = (0.5 - lat) * Math.PI / 0.25;
+  lat = (Math.pow(Math.E, lat) - 1) / (Math.pow(Math.E, lat) + 1);
+  lat = Math.asin(lat) * 180 / Math.PI;
+
+  return [lon, lat];
 }
 
 // checks whether a tile is a whole-area fill after clipping; if it is, there's no sense slicing it further
