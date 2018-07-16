@@ -37,7 +37,13 @@ export default function transformTile(tile, extent) {
 }
 
 function transformPoint(x, y, extent, z2, tx, ty) {
-    return [
-        Math.round(extent * (x * z2 - tx)),
-        Math.round(extent * (y * z2 - ty))];
+  var lon = x,
+    lat = y;
+  lon = (lon - 0.5) * 360;
+
+  lat = (0.5 - lat) * Math.PI / 0.25;
+  lat = (Math.pow(Math.E, lat) - 1) / (Math.pow(Math.E, lat) + 1);
+  lat = Math.asin(lat) * 180 / Math.PI;
+
+  return [lon, lat];
 }

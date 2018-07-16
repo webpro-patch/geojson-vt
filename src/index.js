@@ -6,7 +6,10 @@ import transform from './transform'; // coordinate transformation
 import createTile from './tile';     // final simplified tile generation
 
 export default function geojsonvt(data, options) {
-    return new GeoJSONVT(data, options);
+  if (typeof data === 'string' || data instanceof String) {
+    data = JSON.parse(data);
+  }
+  return new GeoJSONVT(data, options);
 }
 
 function GeoJSONVT(data, options) {
@@ -108,7 +111,10 @@ GeoJSONVT.prototype.splitTile = function (features, z, x, y, cz, cx, cy) {
         }
 
         // if we slice further down, no need to keep source geometry
-        tile.source = null;
+        /*Work Around for missing Tiles
+        Tiles don't appear to be consistently saved for some reason, may have to drill down a couple times
+        so we can't remove source
+        tile.source = null;*/
 
         if (features.length === 0) continue;
 
